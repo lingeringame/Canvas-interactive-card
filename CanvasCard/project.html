@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Final Project</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
+        <style>
+            canvas {
+                border: #333 2px solid;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="myCanvas" width="800px" height="500px"></canvas>
+
+        <script>
+            var canvas = document.querySelector('canvas');
+            var context = myCanvas.getContext('2d');
+            var canvasWidth = canvas.width;
+            var canvasHeight = canvas.height;
+            var BB = canvas.getBoundingClientRect();
+            var offsetX = BB.left;
+            var offsetY = BB.top;
+
+            var text = "The holidays are coming up...";
+            var textColor = "white";
+            var textSize = "30px";
+
+            var xPos = -500;
+            //photoshop image
+            var PsImage = new Image();
+            PsImage.src = "PSbackground.png";
+
+            //dragging variables
+            var dragOk = false;
+            var startX, startY;
+
+            //shape object
+            var shape = {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                fill: " ",
+                isDragging: false
+            }
+
+            var NoseObj = Object.create(shape);
+            NoseObj.x = 700;
+            NoseObj.y = 450;
+            NoseObj.width = 60;
+            NoseObj.height = 10;
+            NoseObj.fill = "#cf710c"
+            NoseObj.isDragging = false;
+            //event listeners
+            canvas.addEventListener("mousedown", myDown, false);
+            canvas.addEventListener("mouseup", myUp, false);
+            canvas.addEventListener("mousemove", myMove, false);
+            canvas.addEventListener("mouseout", myOut, false);
+            
+            function drawNose(n) {
+                //draw rectangle
+                context.fillStyle = n.fill;
+                context.fillRect(n.x, n.y, n.width, n.height);
+            }
+            
+            function draw() {
+                redrawBackground(); //clear background
+                var circles = 2;
+                var radius = 70;
+                var yPos = 420;
+                drawText();
+                drawSnowman(yPos, radius, circles);
+                drawCaption();
+                drawNose(NoseObj);
+            }
+            draw();
+
+            function drawCaption() {
+                context.font = ("10px Helvetiva, Arial, sans-serif");
+                context.fillStyle = "black";
+                context.fillText("↑ Move me!", 705,475);
+            }
+
+            function drawText() {
+                context.fillStyle = textColor;
+                context.font = `${textSize} Mountains of Christmas, Arial, cursive`;
+                context.fillText(text, xPos,100);
+                xPos += 5;
+                if(xPos < 250) {
+                    requestAnimationFrame(draw)
+                } else {
+                    xPos = 240;
+                }
+            }
+            
+            function drawSnowman(yPos, r, num) {
+                context.fillStyle = "white";
+                context.strokeStyle = "#888";
+                context.lineWidth = 1;
+                
+                if(num > 0) {
+                    context.beginPath();
+                    context.arc(400,yPos, r, 0, 2* Math.PI);
+                    context.closePath();
+                    context.fill();
+                    context.stroke();
+                    drawSnowman(yPos-85, r-20, num-1)
+                }
+                function drawEyes(x, num = 2) {
+                    if(num > 0) {
+                        context.fillStyle = "#000";
+                        context.beginPath();
+                        context.arc(x,318,3,0,2*Math.PI);
+                        context.closePath();
+                        context.stroke();
+                        context.fill();
+                        drawEyes(x+25, num-1);
+                    }
+                }
+                drawEyes(378);   //eyes(starting x-coordinate, num of eyes)
+                //mouth
+                context.moveTo(370, 350);
+                context.quadraticCurveTo(387.5,370,405, 350);
+                context.stroke();
+                
+                function drawArms() {
+                    context.save();
+                    context.lineJoin = "round";
+                    context.lineWidth = 6;
+                    context.strokeStyle = "#722E1F";
+                    context.beginPath();
+                    context.moveTo(345, 390);
+                    context.lineTo(280, 330);
+                    context.closePath();
+                    context.stroke();
+                    
+                    context.beginPath();
+                    context.moveTo(458, 390);
+                    context.lineTo(520, 330);
+                    context.closePath();
+                    context.stroke();
+                    context.restore();
+                }
+                drawArms();
+                
+                function buttons(y, num = 3) {
+                    if(num > 0) {
+                        context.save();
+                        context.fillStyle = "#111";
+                        context.beginPath();
+                        context.arc(387, y, 5, 0, 2*Math.PI)
+                        context.closePath();
+                        context.fill();
+                        context.restore();
+                        y += 20;
+                        num -= 1;
+                        buttons(y, num);
+                    }
+                }
+                buttons(405); //Buttons(starting y-coordinate, number of buttons);
+                
+                function drawHat() {
+                    context.save();
+                    context.fillStyle = "#000";
+                    context.strokeStyle = "#000";
+                    context.beginPath();
+                    context.moveTo(365, 295);//lower left
+                    context.lineTo(360, 220);//upper left
+                    context.lineTo(430, 210);//upper right
+                    context.lineTo(430, 295);//lower right
+                    context.closePath();
+                    
+                    context.fill();
+                    context.stroke();
+                    
+                    //hat brim
+                    context.beginPath();
+                    context.moveTo(340, 295);//left
+                    context.lineTo(450, 295);//right
+                    context.closePath();
+                    context.lineJoin = "round";
+                    context.stroke();
+                    context.restore();
+                }
+                drawHat();
+            }
+            
+            
+            function redrawBackground() {
+                context.drawImage(PsImage,0,0,canvasWidth, canvasHeight);
+            }
+
+            function myDown(e){
+                // get the current mouse position
+                var mx=parseInt(e.clientX-offsetX);
+                var my=parseInt(e.clientY-offsetY);
+
+                // test each shape to see if mouse is inside
+                dragOk=false;
+
+                var s=NoseObj            
+                // test if the mouse is inside this rect
+                if(mx>s.x && mx<s.x+s.width && my>s.y && my<s.y+s.height){
+                  // if yes, set that rects isDragging=true
+                  dragOk=true;
+                  s.isDragging=true;
+                }
+
+                // save the current mouse position
+                startX=mx;
+                startY=my;
+            }
+
+            function myUp(e){
+              // clear all the dragging flags
+              dragOk = false;
+              NoseObj.isDragging = false;
+            }
+
+            function myMove(e){
+              // if we're dragging anything...
+              if (dragOk)
+              {           
+                // get the current mouse position
+                var mx=parseInt(e.clientX-offsetX);
+                var my=parseInt(e.clientY-offsetY);
+            
+                // calculate the distance the mouse has moved
+                // since the last mousemove
+                var dx=mx-startX;
+                var dy=my-startY;
+            
+                // move each rect that isDragging 
+                // by the distance the mouse has moved
+                // since the last mousemove
+                var s=NoseObj;
+                if(s.isDragging){
+                  s.x+=dx;
+                  s.y+=dy;
+            }
+            
+                // redraw the scene with the new rect positions
+                draw();
+            
+                // reset the starting mouse position for the next mousemove
+                startX=mx;
+                startY=my;
+            
+                if(s.x < 340 && s.y < 335)
+                {
+                  text = "Great now press the END key.";
+                  xPos = 240;
+                  drawText();
+                  window.addEventListener("keydown", handleEND);
+                    
+                } else {
+                    text = "Can you pin my nose on my face?";
+                } 
+            }
+        }
+        
+        function myOut(e) {
+            dragOk = false;
+            NoseObj.isDragging=false;
+        }
+        
+        
+        function handleEND(e) {
+            if(e.keyCode == 35) {
+                xPos = 240;
+                text = "Wishing you Happy Holidays!!!";
+                textColor = "#83cce6"
+                textSize = "40px";
+                drawText();
+            } 
+        }
+
+        </script>
+    </body>
+</html>
